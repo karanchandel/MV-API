@@ -3,17 +3,17 @@ GET http://localhost:5201/
 Accept: application/json
 
 ### Bulk insert users (POST /cashKuber)
-POST https://mv-api-r0la.onrender.com/cashKuber
+POST http://localhost:5201/cashKuber
 Content-Type: application/json
 api-key: moneyview
 
 [
   {
-    "Name": "Sharan",
-    "Phone": "9676543216",
-    "Email": "Sharan@example.com",
-    "Employment": "IT Engineer",
-    "Pan": "SBCDF1234F",
+    "Name": "vishu",
+    "Phone": "9676543226",
+    "Email": "vishu@example.com",
+    "Employment": "IT ",
+    "Pan": "SBFDF1234F",
     "Pincode": "110001",
     "Income": "50000",
     "City": "Hamirpur",
@@ -23,11 +23,11 @@ api-key: moneyview
     "PartnerId": "partner123"
   },
   {
-    "Name": " Ram Gupta",
-    "Phone": "9323456680",
-    "Email": "Gupta@example.com",
+    "Name": " Raman",
+    "Phone": "9123456680",
+    "Email": "raman@example.com",
     "Employment": "Nurse",
-    "Pan": "NQRR5678X",
+    "Pan": "NRRR5678X",
     "Pincode": "560001",
     "Income": "75000",
     "City": "Bangalore",

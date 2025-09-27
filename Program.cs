@@ -19,6 +19,17 @@ var app = builder.Build();
 // ✅ Add this simple health check endpoint
 app.MapGet("/", () => "✅ MoneyView API is running...");
 
+// ✅ /test endpoint that returns the name received in the request body
+app.MapPost("/test", (NameRequest request) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Name))
+    {
+        return Results.BadRequest(new { message = "Name is required." });
+    }
+
+    return Results.Ok(new { message = "Name received successfully", name = request.Name });
+});
+
 // ✅ Your existing cashKuber endpoint
 app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, HttpContext http) =>
 {
@@ -87,6 +98,8 @@ app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, Http
 
 app.Run();
 
+
+// ✅ Database context
 public class MyDbContext : DbContext
 {
     public MyDbContext(DbContextOptions<MyDbContext> options) : base(options) { }
@@ -117,6 +130,7 @@ public class MyDbContext : DbContext
     }
 }
 
+// ✅ User entity
 public class MoneyViewUser
 {
     public int Id { get; set; }
@@ -132,4 +146,10 @@ public class MoneyViewUser
     public string? Dob { get; set; }
     public string? Gender { get; set; }
     public string PartnerId { get; set; } = default!;
+}
+
+// ✅ Request DTO for /test
+public class NameRequest
+{
+    public required string Name { get; set; }
 }
