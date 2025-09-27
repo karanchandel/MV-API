@@ -1,5 +1,6 @@
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 Env.Load(); // Load environment variables from .env
@@ -14,7 +15,19 @@ string connectionString = Environment.GetEnvironmentVariable("POSTGRES_URL")
 builder.Services.AddDbContext<MyDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddDatabaseDeveloperPageExceptionFilter(); // helpful for debugging
+
 var app = builder.Build();
+
+// Global exception handler
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsync("⚠️ Internal Server Error occurred.");
+    });
+});
 
 // ✅ Health check endpoint
 app.MapGet("/", () => "✅ MoneyView API is running...");
@@ -70,6 +83,7 @@ app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, Http
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Insert error: {ex.Message}"); // log to Render console
             skipped.Add(new { user.Name, user.Phone, user.Pan, reason = ex.Message });
         }
     }
@@ -85,7 +99,7 @@ app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, Http
 
 app.Run();
 
-// ✅ DbContext
+// ✅ DbContext + Entity Model
 public class MyDbContext : DbContext
 {
     public MyDbContext(DbContextOptions<MyDbContext> options) : base(options) { }
@@ -116,7 +130,6 @@ public class MyDbContext : DbContext
     }
 }
 
-// ✅ Entity Model
 public class MoneyViewUser
 {
     public int Id { get; set; }

@@ -3,7 +3,7 @@ GET http://localhost:5201/
 Accept: application/json
 
 ### Bulk insert users (POST /cashKuber)
-POST http://localhost:5201/cashKuber
+POST https://mv-api-r0la.onrender.com/cashKuber
 Content-Type: application/json
 api-key: moneyview
 
