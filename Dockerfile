@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy only the project file first (for caching restore step)
-COPY MV-API.csproj ./
+COPY ["MV-API.csproj", "./"]
 RUN dotnet restore
 
 # Copy the rest of the source code
@@ -18,6 +18,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 # Expose port for Render
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
 # Start the app
