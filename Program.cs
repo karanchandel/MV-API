@@ -2,7 +2,7 @@ using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-Env.Load();
+Env.Load(); // Load environment variables from .env
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,24 +16,12 @@ builder.Services.AddDbContext<MyDbContext>(options =>
 
 var app = builder.Build();
 
-// ✅ Add this simple health check endpoint
+// ✅ Health check endpoint
 app.MapGet("/", () => "✅ MoneyView API is running...");
 
-// ✅ /test endpoint that returns the name received in the request body
-app.MapPost("/test", (NameRequest request) =>
-{
-    if (string.IsNullOrWhiteSpace(request.Name))
-    {
-        return Results.BadRequest(new { message = "Name is required." });
-    }
-
-    return Results.Ok(new { message = "Name received successfully", name = request.Name });
-});
-
-// ✅ Your existing cashKuber endpoint
+// ✅ Main POST endpoint
 app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, HttpContext http) =>
 {
-    // API Key validation
     if (!http.Request.Headers.TryGetValue("api-key", out var apiKey) || apiKey != "moneyview")
         return Results.Json(new { message = "Unauthorized: Invalid api-key header" }, statusCode: 401);
 
@@ -57,7 +45,6 @@ app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, Http
             continue;
         }
 
-        // Check for duplicates
         bool exists = await db.MoneyViewUsers
             .AnyAsync(u => u.Phone == user.Phone || u.Pan == user.Pan);
 
@@ -98,8 +85,7 @@ app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, Http
 
 app.Run();
 
-
-// ✅ Database context
+// ✅ DbContext
 public class MyDbContext : DbContext
 {
     public MyDbContext(DbContextOptions<MyDbContext> options) : base(options) { }
@@ -130,7 +116,7 @@ public class MyDbContext : DbContext
     }
 }
 
-// ✅ User entity
+// ✅ Entity Model
 public class MoneyViewUser
 {
     public int Id { get; set; }
@@ -146,10 +132,4 @@ public class MoneyViewUser
     public string? Dob { get; set; }
     public string? Gender { get; set; }
     public string PartnerId { get; set; } = default!;
-}
-
-// ✅ Request DTO for /test
-public class NameRequest
-{
-    public required string Name { get; set; }
 }
