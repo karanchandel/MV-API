@@ -2,12 +2,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy project file from subfolder
-COPY ["MV-API/MV-API.csproj", "./"]
+COPY *.csproj ./
 RUN dotnet restore
 
-# Copy rest of the source code
-COPY MV-API/. ./
+COPY . ./
 RUN dotnet publish -c Release -o /app/publish
 
 # Stage 2: Runtime image
