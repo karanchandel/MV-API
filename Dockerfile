@@ -7,14 +7,15 @@ RUN dotnet restore
 
 COPY . ./
 RUN dotnet publish -c Release -o /app/publish
-
 # Stage 2: Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
 COPY --from=build /app/publish .
 
+# Render automatically sets PORT environment variable
 ENV ASPNETCORE_URLS=http://+:8080
+ENV DOTNET_URLS=http://+:8080
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "MV-API.dll"]

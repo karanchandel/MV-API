@@ -1,11 +1,6 @@
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Http;
-using System.Text.Json.Serialization;
 
 Env.Load();
 
@@ -19,17 +14,20 @@ string connectionString = Environment.GetEnvironmentVariable("POSTGRES_URL")
 builder.Services.AddDbContext<MyDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Build app
 var app = builder.Build();
 
-// Health check
-app.MapGet("/", () => Results.Ok("✅ Bulk API is running..."));
+// ✅ Add this simple health check endpoint
+app.MapGet("/", () => "✅ MoneyView API is running...");
 
-// Bulk insert endpoint
+// ✅ Your existing cashKuber endpoint
 app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, HttpContext http) =>
 {
+    // API Key validation
     if (!http.Request.Headers.TryGetValue("api-key", out var apiKey) || apiKey != "moneyview")
         return Results.Json(new { message = "Unauthorized: Invalid api-key header" }, statusCode: 401);
+
+    if (users == null || users.Count == 0)
+        return Results.Json(new { message = "No users provided" }, statusCode: 400);
 
     var inserted = new List<object>();
     var skipped = new List<object>();
@@ -48,6 +46,7 @@ app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, Http
             continue;
         }
 
+        // Check for duplicates
         bool exists = await db.MoneyViewUsers
             .AnyAsync(u => u.Phone == user.Phone || u.Pan == user.Pan);
 
@@ -88,8 +87,6 @@ app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, Http
 
 app.Run();
 
-
-
 public class MyDbContext : DbContext
 {
     public MyDbContext(DbContextOptions<MyDbContext> options) : base(options) { }
@@ -120,13 +117,9 @@ public class MyDbContext : DbContext
     }
 }
 
-
-
-
 public class MoneyViewUser
 {
     public int Id { get; set; }
-
     public string? Name { get; set; }
     public string? Phone { get; set; }
     public string? Email { get; set; }
@@ -138,7 +131,5 @@ public class MoneyViewUser
     public string? State { get; set; }
     public string? Dob { get; set; }
     public string? Gender { get; set; }
-
-    [Required]
     public string PartnerId { get; set; } = default!;
 }
