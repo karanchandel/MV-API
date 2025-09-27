@@ -1,0 +1,39 @@
+### Check API status (GET /)
+GET http://localhost:5201/
+Accept: application/json
+
+### Bulk insert users (POST /cashKuber)
+POST http://localhost:5201/cashKuber
+Content-Type: application/json
+api-key: moneyview
+
+[
+  {
+    "Name": "Sharan",
+    "Phone": "9676543216",
+    "Email": "Sharan@example.com",
+    "Employment": "IT Engineer",
+    "Pan": "SBCDF1234F",
+    "Pincode": "110001",
+    "Income": "50000",
+    "City": "Hamirpur",
+    "State": "HP",
+    "Dob": "1990-01-01",
+    "Gender": "Male",
+    "PartnerId": "partner123"
+  },
+  {
+    "Name": " Ram Gupta",
+    "Phone": "9323456680",
+    "Email": "Gupta@example.com",
+    "Employment": "Nurse",
+    "Pan": "NQRR5678X",
+    "Pincode": "560001",
+    "Income": "75000",
+    "City": "Bangalore",
+    "State": "Karnataka",
+    "Dob": "1992-05-12",
+    "Gender": "Female",
+    "PartnerId": "partner123"
+  }
+]
