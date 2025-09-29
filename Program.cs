@@ -2,6 +2,7 @@ using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 Env.Load(); // Load environment variables from .env
 
@@ -32,14 +33,59 @@ app.UseExceptionHandler(errorApp =>
 // ✅ Health check endpoint
 app.MapGet("/", () => "✅ MoneyView API is running...");
 
-// ✅ Main POST endpoint
-app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, HttpContext http) =>
+// ✅ Database connection test endpoint
+app.MapGet("/test-db", async (MyDbContext db) => {
+    try {
+        var canConnect = await db.Database.CanConnectAsync();
+        return $"✅ Database Connected: {canConnect}";
+    }
+    catch (Exception ex) {
+        return $"❌ Database Error: {ex.Message}";
+    }
+});
+
+// ✅ Main POST endpoint - Flexible (accepts both single object and array)
+app.MapPost("/cashKuber", async (HttpContext http, MyDbContext db) =>
 {
+    // API Key check
     if (!http.Request.Headers.TryGetValue("api-key", out var apiKey) || apiKey != "moneyview")
         return Results.Json(new { message = "Unauthorized: Invalid api-key header" }, statusCode: 401);
 
-    if (users == null || users.Count == 0)
-        return Results.Json(new { message = "No users provided" }, statusCode: 400);
+    // Request body read karo
+    var requestBody = await new StreamReader(http.Request.Body).ReadToEndAsync();
+    
+    if (string.IsNullOrWhiteSpace(requestBody))
+        return Results.Json(new { message = "Empty request body" }, statusCode: 400);
+
+    List<MoneyViewUser> users = new List<MoneyViewUser>();
+    
+    try
+    {
+        // Try to parse as array first
+        var jsonArray = JsonSerializer.Deserialize<JsonElement>(requestBody);
+        
+        if (jsonArray.ValueKind == JsonValueKind.Array)
+        {
+            // Array format mila
+            users = JsonSerializer.Deserialize<List<MoneyViewUser>>(requestBody) 
+                    ?? new List<MoneyViewUser>();
+        }
+        else
+        {
+            // Single object format mila
+            var singleUser = JsonSerializer.Deserialize<MoneyViewUser>(requestBody);
+            if (singleUser != null)
+                users.Add(singleUser);
+        }
+    }
+    catch (JsonException)
+    {
+        return Results.Json(new { message = "Invalid JSON format" }, statusCode: 400);
+    }
+
+    // Rest of your existing logic
+    if (users.Count == 0)
+        return Results.Json(new { message = "No valid users provided" }, statusCode: 400);
 
     var inserted = new List<object>();
     var skipped = new List<object>();
@@ -83,11 +129,12 @@ app.MapPost("/cashKuber", async (List<MoneyViewUser> users, MyDbContext db, Http
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Insert error: {ex.Message}"); // log to Render console
+            Console.WriteLine($"Insert error: {ex.Message}");
             skipped.Add(new { user.Name, user.Phone, user.Pan, reason = ex.Message });
         }
     }
 
+    // Response logic
     if (inserted.Count > 0 && skipped.Count > 0)
         return Results.Json(new { insertedCount = inserted.Count, skippedCount = skipped.Count, inserted, skipped }, statusCode: 207);
 
